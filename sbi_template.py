@@ -69,6 +69,20 @@ def run_simulation(simulator: ParflowHook, theta: torch.tensor, inits: torch.ten
     pred = calibrate_predictions(pred, pred_params)
     return pred
     
+def make_prior(parameters: List[str]) -> sbi.Distribution:
+    """Make prior distribution for all parameters
+
+    Parameters:
+    -----------
+    parameters:
+        list of parameter names to construct prior for
+
+    Returns:
+    --------
+    sbi.Distribution
+    """
+    raise NotImplementedError
+
 def anpe(
     simulator: ParflowHook, 
     huc: int, 
