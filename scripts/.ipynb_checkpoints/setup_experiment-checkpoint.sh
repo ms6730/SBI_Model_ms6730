@@ -4,7 +4,7 @@
 #SBATCH --ntasks=16      # total number of tasks per node
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --mem-per-cpu=4G         # memory per cpu-core (4G is default)
-#SBATCH --time=01:00:00
+#SBATCH --time=00:20:00
 
 module load parflow-shared
 
@@ -17,7 +17,9 @@ end="2002-12-01"
 timezone="EDT"
 P=4
 Q=4
+ens_mems=5
+scalar=2
 
 # Set up and do baseline run
-python3 setup_run_eval_baseline.py "$base_dir" "$runname" "$huc" "$hours" "$start" "$end" "$timezone" "$P" "$Q"
+python3 setup_run_eval_baseline.py "$base_dir" "$runname" "$huc" "$hours" "$start" "$end" "$timezone" "$P" "$Q" "$ens_mems" "$scalar"
 

@@ -8,7 +8,7 @@ from parflow.tools.settings import set_working_directory
 from pathlib import Path
 from glob import glob
 from parflow.tools.io import read_pfb, write_pfb, read_clm, read_pfb_sequence
-from pf_ens_functions import setup_baseline_run, calculate_water_table_depth, calculate_flow
+from pf_ens_functions import setup_baseline_run, calculate_water_table_depth, calculate_flow, get_parflow_output_nc
 from datetime import datetime, timedelta
 import xarray as xr
 import numpy as np
@@ -16,9 +16,14 @@ import pandas as pd
 import parflow as pf
 model_eval_path = os.path.abspath('/home/at8471/c2_sbi_experiments/model_evaluation')
 sys.path.append(model_eval_path)
-from model_evaluation import get_observations, get_parflow_output, calculate_metrics, explore_available_observations, get_parflow_output_nc
-from plots import plot_obs_locations, plot_time_series, plot_compare_scatter, plot_metric_map
+from model_evaluation import get_observations
+import subsettools as st
+import hf_hydrodata as hf
+import torch
+from torch.distributions import Uniform
+import pickle
 
+#read in variables from the job script
 base_dir = sys.argv[1]
 runname = sys.argv[2]
 huc = sys.argv[3]
@@ -28,13 +33,17 @@ end = sys.argv[6]
 timezone = sys.argv[7]
 P = int(sys.argv[8])
 Q = int(sys.argv[9])
+ens_mems = int(sys.argv[10])
+scalar = int(sys.argv[11])
 
+#set up the baseline run for the target HUC for this experiment
 grid = "conus2"
 temporal_resolution = "daily"
 variable_list = ["streamflow"]
 
 setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours)
 
+#run the baseline
 out_dir = f"{base_dir}/outputs/{runname}"
 set_working_directory(out_dir)
 
@@ -42,7 +51,7 @@ run = Run.from_definition(f'{out_dir}/{runname}.yaml')
 run.TimingInfo.StopTime = num_hours
 run.run(working_directory=f'{out_dir}')
 
-# Postprocessing
+# Create a daily mean .nc output file and delete hourly pfbs
 data = run.data_accessor
 slope_x_file = f'{out_dir}/slope_x.pfb'
 slope_x = pf.read_pfb(slope_x_file)
@@ -130,8 +139,8 @@ _ = [os.remove(os.path.abspath(f)+'.dist') for f in saturation_files]
 _ = [os.remove(os.path.abspath(f)) for f in clm_files]
 _ = [os.remove(os.path.abspath(f)+'.dist') for f in clm_files]
 
-#evaluate baseline at target locations 
-ij_bounds, mask = subsettools.define_huc_domain([huc], grid)
+#Write out csvs of observations from hydrodata of target variables within the subset domain 
+ij_bounds, mask = st.define_huc_domain([huc], grid)
 
 for variable in variable_list:
     # Get observation data for sites in domain
@@ -146,15 +155,67 @@ for variable in variable_list:
     parflow_data_df = get_parflow_output_nc(f"{out_dir}/{runname}.nc", f'{out_dir}/{variable}_{temporal_resolution}_metadf.csv',var_name = variable, write_path = f"{out_dir}/{variable}_{temporal_resolution}_pfsim.csv")
 
     print("created pf df")
+
+#create the initial prior
+subset_mannings = read_pfb(f"{out_dir}/mannings.pfb")
+filters = {"dataset":"conus2_domain", "variable":"mannings"}
+mannings_map = hf.get_gridded_data(filters)
+all_vals = np.unique(mannings_map)
+subset_vals = np.unique(subset_mannings)
+mannings_dict = {}
     
-    # Calculate metrics comparing ParFlow vs. observations
-    obs_data_df = obs_data_df.dropna(axis=1)
-    common_columns = obs_data_df.columns.intersection(parflow_data_df.columns)
-    obs_data_df = obs_data_df[common_columns]
-    parflow_data_df = parflow_data_df[common_columns]
-    obs_metadata_df= obs_metadata_df[obs_metadata_df['site_id'].isin(common_columns)]
+for i in range(len(all_vals)):
+    mannings_dict[f"m{i}"]=[all_vals[i]]
     
-    metrics_df = calculate_metrics(obs_data_df, parflow_data_df, obs_metadata_df,
-                                   write_csv=True, csv_path=f"{out_dir}/{variable}_metrics.csv")
-    print("calculated metrics")
+filtered_dict = {k: v for k, v in mannings_dict.items() if v in subset_vals}
+filtered_df = pd.DataFrame(filtered_dict)
+
+orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy())
+mins = orig_mannings/scalar
+maxs = orig_mannings*scalar
+prior = Uniform(mins, maxs)
+#save the prior
+with open(f'{base_dir}/outputs/prior0.pkl', 'wb') as f:
+    pickle.dump(prior, f)
+
+#create samples for the first ensemble
+sample = prior.sample((ens_mems,))
+sample = sample.numpy()
+sample_df = pd.DataFrame(sample, columns=filtered_df.columns)
+sample_df.to_csv(f"{base_dir}/outputs/{runname}_mannings_ens0.csv", index=False)
+
+#set up run directories and unique mannings inputs corresponding to samples
+for row in range(len(sample_df)):
+    run_dir = f"{base_dir}/outputs/{runname}_{row}/"
+    mkdir(run_dir)
+    new_mannings = subset_mannings.copy()
     
+    for key in filtered_dict.keys():
+        orig_val = filtered_dict[key][0]
+        new_val = sample_df.iloc[row][key]
+
+        new_mannings[new_mannings == orig_val] = new_val
+
+    write_pfb(f"{run_dir}/mannings_{row}.pfb", new_mannings, p=P, q=Q, dist=True)
+
+    st.copy_files(read_dir=f"{base_dir}/inputs/{runname}/static", write_dir=run_dir)
+
+    runscript_path = f"{run_dir}/{runname}.yaml"
+    
+    shutil.copy(f"{base_dir}/outputs/{runname}/{runname}.yaml", runscript_path)
+    
+    runscript_path = st.change_filename_values(
+        runscript_path=runscript_path,
+        mannings = f"mannings_{i}.pfb"
+    )
+    
+    st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
+
+    
+    
+
+
+
+
+
+

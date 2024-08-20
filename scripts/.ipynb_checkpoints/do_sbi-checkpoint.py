@@ -66,6 +66,9 @@ accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_sam
 # update prior for next round
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 #save proposal with number (so we can see how evolves) 
+with open(f'{base_dir}/outputs/prior{next_ens}.pkl', 'wb') as f:
+    pickle.dump(proposal, f)
+    
 # add convergence criteria
 #draw new samples from the updated prior for the next round of simulation
 
@@ -75,7 +78,7 @@ new_sample = new_sample.numpy()
 
 #create and write a new dataframe from the proposal samples from which to create the next ensemble
 new_ens_df = pd.DataFrame(new_sample, columns=sample_df.columns)
-new_ens_df.to_csv(f"{base_dir}/{runname}_mannings_ens{next_ens}.csv", index=False)
+new_ens_df.to_csv(f"{base_dir}/outputs/{runname}_mannings_ens{next_ens}.csv", index=False)
 
 
 
