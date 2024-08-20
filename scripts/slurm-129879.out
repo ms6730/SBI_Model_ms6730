@@ -1,6 +1,0 @@
-Loading parflow-shared/latest
-  Loading requirement: openmpi/gcc/4.1.0 parflow/3.10.0
-  File "/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/setup_run_eval_baseline.py", line 17
-    import 
-           ^
-SyntaxError: invalid syntax

@@ -13,8 +13,8 @@ module load parflow-shared
 task_id=$((SLURM_ARRAY_TASK_ID - 1))
 
 runname='sinnemahoning'
-hours=2208
-start_date="2002-10-01"
+hours=840
+start_date="2002-10-27"
 
 # Generate a unique output file name based on the task ID
 out_dir="/home/at8471/c2_sbi_experiments/sbi_framework/outputs/${runname}_${task_id}"

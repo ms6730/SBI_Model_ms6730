@@ -71,7 +71,7 @@ def create_mannings_ensemble(base_path, baseline_runname, mannings_file, num_ens
         df = pd.DataFrame(filtered_dict)
         df.to_csv(f"{base_path}/{baseline_runname}_mannings_ens{ens_num}.csv", index=False)
 
-def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", P=1, Q=1, hours = 96):
+def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", P=1, Q=1, hours = 96, tz="UTC"):
     #make directories
     input_dir = os.path.join(base_dir, "inputs", f"{runname}")
     output_dir = os.path.join(base_dir, "outputs")
@@ -90,13 +90,14 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_d
     
     static_paths = st.subset_static(ij_bounds, dataset=var_ds, write_dir=static_write_dir)
     
-    clm_paths = st.config_clm(ij_bounds, start=start, end=end, dataset=var_ds, write_dir=static_write_dir)
+    clm_paths = st.config_clm(ij_bounds, start=start, end=end, dataset=var_ds, write_dir=static_write_dir, time_zone=tz)
     
     forcing_paths = st.subset_forcing(
         ij_bounds,
         grid=grid,
         start=start,
         end=end,
+        time_zone=tz,
         dataset=forcing_ds,
         write_dir=forcing_dir,
     )

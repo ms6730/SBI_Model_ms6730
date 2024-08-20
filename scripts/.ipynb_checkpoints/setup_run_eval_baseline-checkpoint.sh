@@ -11,14 +11,13 @@ module load parflow-shared
 base_dir='/home/at8471/c2_sbi_experiments/sbi_framework'
 runname='sinnemahoning'
 huc='02050202'
-hours=2208
-
-start="2002-10-01"
-end="2002-12-31"
-
+hours=840
+start="2002-10-27"
+end="2002-12-01"
+timezone="EDT"
 P=4
 Q=4
 
 # Set up and do baseline run
-python3 setup_run_eval_baseline.py "$base_dir" "$runname" "$huc" "$hours" "$start" "$end" "$P" "$Q"
+python3 setup_run_eval_baseline.py "$base_dir" "$runname" "$huc" "$hours" "$start" "$end" "$timezone" "$P" "$Q"
 

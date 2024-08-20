@@ -11,8 +11,8 @@ grid = "conus2"
 huc_list = ["02050202"]
 ij_bounds, mask = subsettools.define_huc_domain(huc_list, grid)
 
-start_date = "2002-10-01"
-end_date = "2002-12-31"
+start_date = "2002-10-27"
+end_date = "2002-12-01"
 temporal_resolution = "daily"
 
 runname="sinnemahoning"

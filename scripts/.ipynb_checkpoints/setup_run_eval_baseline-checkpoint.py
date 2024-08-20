@@ -25,8 +25,9 @@ huc = sys.argv[3]
 num_hours = float(sys.argv[4])
 start = sys.argv[5]
 end = sys.argv[6]
-P = int(sys.argv[7])
-Q = int(sys.argv[8])
+timezone = sys.argv[7]
+P = int(sys.argv[8])
+Q = int(sys.argv[9])
 
 grid = "conus2"
 temporal_resolution = "daily"
