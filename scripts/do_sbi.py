@@ -65,8 +65,11 @@ accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_sam
 
 # update prior for next round
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-
+#save proposal with number (so we can see how evolves) 
+# add convergence criteria
 #draw new samples from the updated prior for the next round of simulation
+
+#new samples goes into create mannings ens
 new_sample = proposal.sample((ens_mems,))
 new_sample = new_sample.numpy()
 

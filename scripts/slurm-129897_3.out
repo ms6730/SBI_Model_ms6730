@@ -1,0 +1,24 @@
+/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/run_ensemble.py:50: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  timesteps = pd.date_range(start, periods=len(pressure_files), freq='1H')
+/home/SHARED/virtual-environments/parflow-shared/conda/lib/python3.11/site-packages/parflow/tools/io.py:1300: FutureWarning: The 'delim_whitespace' keyword in pd.read_csv is deprecated and will be removed in a future version. Use ``sep='\s+'`` instead
+  df = pd.read_csv(file_name, delim_whitespace=True, skiprows=2, header=None)
+/home/SHARED/virtual-environments/parflow-shared/conda/lib/python3.11/site-packages/parflow/tools/io.py:1300: FutureWarning: The 'delim_whitespace' keyword in pd.read_csv is deprecated and will be removed in a future version. Use ``sep='\s+'`` instead
+  df = pd.read_csv(file_name, delim_whitespace=True, skiprows=2, header=None)
+Solver: Field BinaryOutDir is not part of the expected schema <class 'parflow.tools.database.generated.Solver'>
+
+# ==============================================================================
+# ParFlow directory
+#  - /home/SHARED/software/parflow/3.10.0
+# ParFlow version
+#  - 3.10.0
+# Working directory
+#  - /home/at8471/c2_sbi_experiments/sbi_framework/outputs/sinnemahoning_2
+# ParFlow database
+#  - sinnemahoning.pfidb
+# ==============================================================================
+
+
+# ==============================================================================
+# ParFlow ran successfully
+# ==============================================================================
+

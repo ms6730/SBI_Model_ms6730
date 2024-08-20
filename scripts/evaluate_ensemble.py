@@ -49,4 +49,30 @@ for mem in range(0,ens_mems):
         metrics_df = calculate_metrics(obs_data_df, parflow_data_df, obs_metadata_df,
                                        write_csv=True, csv_path=f"{parflow_output_dir}/{variable}_metrics.csv")
         print("calculated metrics")
-        
+
+#initialize SNPE
+inference = SNPE(prior=prior)
+
+#train the neural posterior density estimator
+inference.append_simulations(theta_samples, sim_tensor_arr)
+density_estimator = inference.train(force_first_round_loss=True)
+
+#create the posterior
+posterior = inference.build_posterior(density_estimator).set_default_x(reshaped_obsv)
+
+#restrict and update the prior
+accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_samples_to_estimate_support=num_samples)
+
+# update prior for next round
+proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
+#save proposal with number (so we can see how evolves) 
+# add convergence criteria
+#draw new samples from the updated prior for the next round of simulation
+
+#new samples goes into create mannings ens
+new_sample = proposal.sample((ens_mems,))
+new_sample = new_sample.numpy()
+
+#create and write a new dataframe from the proposal samples from which to create the next ensemble
+new_ens_df = pd.DataFrame(new_sample, columns=sample_df.columns)
+new_ens_df.to_csv(f"{base_dir}/{runname}_mannings_ens{next_ens}.csv", index=False)
