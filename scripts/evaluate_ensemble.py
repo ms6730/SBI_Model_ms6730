@@ -1,5 +1,7 @@
 import pandas as pd
 import subsettools
+from sbi.inference import SNPE
+
 model_eval_path = os.path.abspath('/home/at8471/c2_sbi_experiments/model_evaluation')
 sys.path.append(model_eval_path)
 from model_evaluation import get_observations, get_parflow_output, calculate_metrics, explore_available_observations, get_parflow_output_nc
@@ -18,7 +20,7 @@ temporal_resolution = "daily"
 runname="sinnemahoning"
 
 variable_list = ["streamflow"]
-ens_mems = 10 
+ens_mems = 10
 
 # Evaluate
 for mem in range(0,ens_mems):
@@ -50,29 +52,29 @@ for mem in range(0,ens_mems):
                                        write_csv=True, csv_path=f"{parflow_output_dir}/{variable}_metrics.csv")
         print("calculated metrics")
 
-#initialize SNPE
-inference = SNPE(prior=prior)
 
-#train the neural posterior density estimator
-inference.append_simulations(theta_samples, sim_tensor_arr)
-density_estimator = inference.train(force_first_round_loss=True)
+##### SBI #####
 
-#create the posterior
-posterior = inference.build_posterior(density_estimator).set_default_x(reshaped_obsv)
+# try loading existing inference structure
+# if not there, create new one from prior
+try:
+    fp = open("inference.pkl", "rb")
+except FileNotFoundError:
+    with open("prior.pkl", "rb") as fp:
+        prior = pickle.load(fp)
+    inference = SNPE(prior=prior)
+else:
+    with fp:
+        inference = pickle.load(fp)
 
-#restrict and update the prior
-accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_samples_to_estimate_support=num_samples)
+# TODO: need to get parameters theta and results x for these sims
 
-# update prior for next round
-proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-#save proposal with number (so we can see how evolves) 
-# add convergence criteria
-#draw new samples from the updated prior for the next round of simulation
+# update posterior with new simulations
+_ = inference.append_simulations(theta, x).train(force_first_round_loss=True)
+posterior = inference.build_posterior().set_default_x(obs)
 
-#new samples goes into create mannings ens
-new_sample = proposal.sample((ens_mems,))
-new_sample = new_sample.numpy()
-
-#create and write a new dataframe from the proposal samples from which to create the next ensemble
-new_ens_df = pd.DataFrame(new_sample, columns=sample_df.columns)
-new_ens_df.to_csv(f"{base_dir}/{runname}_mannings_ens{next_ens}.csv", index=False)
+# save results
+with open("inference.pkl", "wb") as fp:
+    pickle.dump(inference, fp)
+with open("posterior.pkl", "wb") as fp:
+    pickle.dump(posterior, fp)
