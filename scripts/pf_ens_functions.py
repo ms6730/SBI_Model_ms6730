@@ -16,8 +16,8 @@ import parflow as pf
 import subprocess
         
 
-def create_mannings_ensemble(base_path, baseline_runname, mannings_file, num_ens_mem=5, P=1, Q=1, scalar = 10, ens_num=0, sample_file_path=None):
-    subset_mannings = read_pfb(f"{base_path}/outputs/{baseline_runname}/{mannings_file}.pfb")
+def create_mannings_ensemble(base_path, runname, mannings_file, proposal, num_sims=5, P=1, Q=1, ens_num=0):
+    subset_mannings = read_pfb(f"{base_path}/outputs/{runname}/{mannings_file}.pfb")
     filters = {"dataset":"conus2_domain", "variable":"mannings"}
     mannings_map = hf.get_gridded_data(filters)
     all_vals = np.unique(mannings_map)
@@ -28,38 +28,36 @@ def create_mannings_ensemble(base_path, baseline_runname, mannings_file, num_ens
         mannings_dict[f"m{i}"]=[all_vals[i]]
         
     filtered_dict = {k: v for k, v in mannings_dict.items() if v in subset_vals}
+    filtered_df = pd.DataFrame(filtered_dict)
     
-    if sample_file_path is not None:
-        sample_df = pd.read_csv(sample_file_path)
-        new_ens_dict = sample_df.to_dict(orient='columns')
-        print(new_ens_dict)
-        
-    for i in range(0, num_ens_mem):
-        run_dir = f"{base_path}/outputs/{baseline_runname}_{i}/"
+    theta = proposal.sample((num_sims,)).numpy()
+    theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
+    theta_df.to_csv(f"{base_path}/outputs/{runname}_mannings_ens{ens_num}.csv", index=False)
+    
+    for row in range(len(theta_df)):
+        run_dir = f"{base_path}/outputs/{runname}_{row}/"
+        mkdir(run_dir)
+        new_mannings = subset_mannings.copy()
+    
+    for i in range(0, num_sims):
+        run_dir = f"{base_path}/outputs/{runname}_{i}/"
         mkdir(run_dir)
         
         new_mannings = subset_mannings.copy()
         
         for key in filtered_dict.keys():
             orig_val = filtered_dict[key][0]
-            if sample_file_path is None:
-                low_bound = orig_val / scalar
-                high_bound = orig_val * scalar
-                new_val = np.random.uniform(low_bound, high_bound)
+            new_val = sample_df.iloc[row][key]
     
-                filtered_dict[key].append(new_val)
-            else:
-                new_val = new_ens_dict[key][i]
-
             new_mannings[new_mannings == orig_val] = new_val
 
         write_pfb(f"{run_dir}/{mannings_file}_{i}.pfb", new_mannings, p=P, q=Q, dist=True)
 
-        st.copy_files(read_dir=f"{base_path}/inputs/{baseline_runname}/static", write_dir=run_dir)
+        st.copy_files(read_dir=f"{base_path}/inputs/{runname}/static", write_dir=run_dir)
 
-        runscript_path = f"{run_dir}/{baseline_runname}.yaml"
+        runscript_path = f"{run_dir}/{runname}.yaml"
         
-        shutil.copy(f"{base_path}/outputs/{baseline_runname}/{baseline_runname}.yaml", runscript_path)
+        shutil.copy(f"{base_path}/outputs/{runname}/{runname}.yaml", runscript_path)
         
         runscript_path = st.change_filename_values(
             runscript_path=runscript_path,
@@ -67,10 +65,6 @@ def create_mannings_ensemble(base_path, baseline_runname, mannings_file, num_ens
         )
         
         st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
-
-    if sample_file_path is None:
-        df = pd.DataFrame(filtered_dict)
-        df.to_csv(f"{base_path}/{baseline_runname}_mannings_ens{ens_num}.csv", index=False)
 
 def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", P=1, Q=1, hours = 96, tz="UTC"):
     #make directories

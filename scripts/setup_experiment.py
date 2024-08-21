@@ -156,7 +156,7 @@ for variable in variable_list:
 
     print("created pf df")
 
-#create the initial prior
+#filter the conus2 mannings values by the subset mannings
 subset_mannings = read_pfb(f"{out_dir}/mannings.pfb")
 filters = {"dataset":"conus2_domain", "variable":"mannings"}
 mannings_map = hf.get_gridded_data(filters)
@@ -170,46 +170,16 @@ for i in range(len(all_vals)):
 filtered_dict = {k: v for k, v in mannings_dict.items() if v in subset_vals}
 filtered_df = pd.DataFrame(filtered_dict)
 
+#create prior for subset mannings map
 orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy())
 mins = orig_mannings/scalar
 maxs = orig_mannings*scalar
 prior = Uniform(mins, maxs)
+
 #save the prior
-with open(f'{base_dir}/outputs/prior0.pkl', 'wb') as f:
+with open(f'{base_dir}/outputs/{runname}_prior.pkl', 'wb') as f:
     pickle.dump(prior, f)
 
-#create samples for the first ensemble
-sample = prior.sample((ens_mems,))
-sample = sample.numpy()
-sample_df = pd.DataFrame(sample, columns=filtered_df.columns)
-sample_df.to_csv(f"{base_dir}/outputs/{runname}_mannings_ens0.csv", index=False)
-
-#set up run directories and unique mannings inputs corresponding to samples
-for row in range(len(sample_df)):
-    run_dir = f"{base_dir}/outputs/{runname}_{row}/"
-    mkdir(run_dir)
-    new_mannings = subset_mannings.copy()
-    
-    for key in filtered_dict.keys():
-        orig_val = filtered_dict[key][0]
-        new_val = sample_df.iloc[row][key]
-
-        new_mannings[new_mannings == orig_val] = new_val
-
-    write_pfb(f"{run_dir}/mannings_{row}.pfb", new_mannings, p=P, q=Q, dist=True)
-
-    st.copy_files(read_dir=f"{base_dir}/inputs/{runname}/static", write_dir=run_dir)
-
-    runscript_path = f"{run_dir}/{runname}.yaml"
-    
-    shutil.copy(f"{base_dir}/outputs/{runname}/{runname}.yaml", runscript_path)
-    
-    runscript_path = st.change_filename_values(
-        runscript_path=runscript_path,
-        mannings = f"mannings_{i}.pfb"
-    )
-    
-    st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
 
     
     

@@ -17,14 +17,15 @@ ens_num=0
 
 # read the latest proposal
 try:
-    fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
+    fp = open(f"{base_dir}/{runname}_posterior{ens_num}.pkl", "rb")
 except FileNotFoundError:
     fp = open(f"{base_dir}/{runname}_prior.pkl", "rb")
-proposal = inference = pickle.load(fp)
+proposal = pickle.load(fp)
 
 # run sims with these parameters
 theta = proposal.sample((num_sims,)).numpy()
 # TODO: this function needs to accept theta!!!
+#can it accept the proposal instead?
 create_mannings_ensemble(theta, base_dir = base_dir, baseline_runname = runname, mannings_file = orig_mannings_file_name, num_ens_mem=num_mems, P=P, Q=Q, ens_num = ens_num)
 
 # save theta for sbi
