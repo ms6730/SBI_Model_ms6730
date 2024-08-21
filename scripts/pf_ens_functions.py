@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import glob
 import parflow
 from parflow import Run
 from parflow.tools.io import read_pfb, write_pfb, read_clm
@@ -199,3 +200,11 @@ def calculate_flow(ds, slope_x, slope_y, mannings, dx, dy, mask):
         dims=('time', 'y', 'x')
     )
     return flow
+
+def backup_previous(filename):
+    files = glob.glob(filename+"*")
+    if len(files) == 0:
+        return
+    num = len(files) - 1
+    new_name = f"{filename}.{num}"   
+    os.rename(filename, new_name)
