@@ -1,5 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=sinne_ens
+#SBATCH --output=/home/at8471/c2_sbi_experiments/sbi_framework/%x_%j.out
+#SBATCH --error=/home/at8471/c2_sbi_experiments/sbi_framework/%x_%j.err
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks=16      # total number of tasks per node
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
