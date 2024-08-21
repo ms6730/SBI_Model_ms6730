@@ -1,7 +1,7 @@
-import numpy as np
 from pf_ens_functions import create_mannings_ensemble, backup_previous
 import pickle
 from sbi.utils import get_density_thresholder, RestrictedPrior
+import shutil
 
 base_dir = '/home/at8471/c2_sbi_experiments/sbi_framework'
 huc = '02050202'
@@ -18,18 +18,22 @@ ens_num=0
 
 # read the latest proposal
 try:
-    fp = open(f"{base_dir}/{runname}_posterior{ens_num}.pkl", "rb")
+    fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
 except FileNotFoundError:
     fp = open(f"{base_dir}/{runname}_prior.pkl", "rb")
 proposal = pickle.load(fp)
 
-# run sims with these parameters
-theta = proposal.sample((num_sims,)).numpy()
-# TODO: this function needs to accept theta!!!
-#can it accept the proposal instead?
-create_mannings_ensemble(base_path = base_dir, runname = runname, mannings_file = baseline_mannings_file_name,orig_vals_path=path_to_mannings_val_df, proposal=proposal,num_sims=ens_mems, P=P, Q=Q, ens_num = ens_num)
+#don't really need a create_mannings_ensemble function, can just run the code here
+create_mannings_ensemble(proposal=proposal,base_path = base_dir, runname = runname, mannings_file = baseline_mannings_file_name,orig_vals_path=path_to_mannings_val_df,num_sims=ens_mems, P=P, Q=Q, ens_num = ens_num)
 
-# save theta for sbi
-filename = f"{base_dir}/{runname}_parameters.npy"
-backup_previous(filename)
-numpy.save(filename, theta)
+#save current inference and posterior
+try:
+    src_file = f"{base_dir}/{runname}_posterior.pkl"
+    dest_file=f"{base_dir}/{runname}_posterior{ens_num-1}.pkl"
+    shutil.copyfile(src_file, dest_file)
+    
+    src_file = f"{base_dir}/{runname}_inference.pkl"
+    dest_file=f"{base_dir}/{runname}_inference{ens_num-1}.pkl"
+    shutil.copyfile(src_file, dest_file)
+except:
+    pass

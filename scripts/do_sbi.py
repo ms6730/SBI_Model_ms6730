@@ -66,7 +66,7 @@ accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_sam
 # update prior for next round
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 #save proposal with number (so we can see how evolves) 
-with open(f'{base_dir}/outputs/prior{next_ens}.pkl', 'wb') as f:
+with open(f'{base_dir}/outputs/{runname}_posterior.pkl', 'wb') as f:
     pickle.dump(proposal, f)
     
 # add convergence criteria

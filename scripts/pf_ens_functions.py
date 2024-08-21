@@ -15,17 +15,18 @@ import xarray as xr
 import parflow as pf
 import subprocess
         
-
-def create_mannings_ensemble(base_path, runname, mannings_file, orig_vals_path, proposal, num_sims=5, P=1, Q=1, ens_num=0):
+#make functions have keyworded arguments, 
+def create_mannings_ensemble(proposal, base_path, runname, mannings_file, orig_vals_path, num_sims=5, P=1, Q=1, ens_num=0):
     subset_mannings = read_pfb(f"{base_path}/outputs/{runname}/{mannings_file}.pfb")
     filtered_df=pd.read_csv(orig_vals_path)
     
     theta = proposal.sample((num_sims,)).numpy()
     theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
-    theta_df.to_csv(f"{base_path}/outputs/{runname}_mannings_ens{ens_num}.csv", index=False)
+    theta_df.to_csv(f"{base_path}/outputs/{runname}_parameters_ens{ens_num}.csv", index=False)
     
     for row in range(len(theta_df)):
-        run_dir = f"{base_path}/outputs/{runname}_{row}/"
+        #
+        run_dir = f"{base_path}/outputs/{runname}_{ens_num}_{row}/"
         mkdir(run_dir)
         new_mannings = subset_mannings.copy()
         
@@ -178,11 +179,3 @@ def calculate_flow(ds, slope_x, slope_y, mannings, dx, dy, mask):
         dims=('time', 'y', 'x')
     )
     return flow
-
-def backup_previous(filename):
-    files = glob.glob(filename+"*")
-    if len(files) == 0:
-        return
-    num = len(files) - 1
-    new_name = f"{filename}.{num}"   
-    os.rename(filename, new_name)

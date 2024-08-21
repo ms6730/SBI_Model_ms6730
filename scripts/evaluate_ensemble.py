@@ -7,7 +7,6 @@ model_eval_path = os.path.abspath('/home/at8471/c2_sbi_experiments/model_evaluat
 sys.path.append(model_eval_path)
 from model_evaluation import get_observations, get_parflow_output, calculate_metrics, explore_available_observations, get_parflow_output_nc
 from plots import plot_obs_locations, plot_time_series, plot_compare_scatter, plot_metric_map
-from pf_ens_functions import backup_previous
 
 # Define inputs to workflow
 base_dir = "/home/at8471/c2_sbi_experiments/sbi_framework"
@@ -72,7 +71,7 @@ else:
 # get parameters for last ensemble run
 theta = np.load(f"{base_dir}/{runname}_parameters.npy")
 
-# TODO: need to get parameters results x for these sims
+# TODO: need to get parameters results x for these sims, move over concatenated data vector stuff
 
 # update posterior with new simulations
 _ = inference.append_simulations(theta, x).train(force_first_round_loss=True)
@@ -80,11 +79,9 @@ posterior = inference.build_posterior().set_default_x(obs)
 
 # save results, backup existing ones
 filename = f"{base_dir}/{runname}_inference.pkl"
-
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)
 
 filename = f"{base_dir}/{runname}_posterior.pkl"
-backup_previous(filename)
 with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)

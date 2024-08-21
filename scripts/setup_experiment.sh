@@ -9,7 +9,8 @@
 #SBATCH --time=00:20:00
 
 #module load parflow-shared
-
+#all these variables should be in a runfile that describes the run
+#add function that takes json (etc) in pf_ens_functions.py, can work for multiple scripts
 base_dir='/home/at8471/c2_sbi_experiments/sbi_framework'
 runname='sinnemahoning'
 huc='02050202'
