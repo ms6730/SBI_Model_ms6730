@@ -16,19 +16,9 @@ import parflow as pf
 import subprocess
         
 
-def create_mannings_ensemble(base_path, runname, mannings_file, proposal, num_sims=5, P=1, Q=1, ens_num=0):
+def create_mannings_ensemble(base_path, runname, mannings_file, orig_vals_path, proposal, num_sims=5, P=1, Q=1, ens_num=0):
     subset_mannings = read_pfb(f"{base_path}/outputs/{runname}/{mannings_file}.pfb")
-    filters = {"dataset":"conus2_domain", "variable":"mannings"}
-    mannings_map = hf.get_gridded_data(filters)
-    all_vals = np.unique(mannings_map)
-    subset_vals = np.unique(subset_mannings)
-    mannings_dict = {}
-        
-    for i in range(len(all_vals)):
-        mannings_dict[f"m{i}"]=[all_vals[i]]
-        
-    filtered_dict = {k: v for k, v in mannings_dict.items() if v in subset_vals}
-    filtered_df = pd.DataFrame(filtered_dict)
+    filtered_df=pd.read_csv(orig_vals_path)
     
     theta = proposal.sample((num_sims,)).numpy()
     theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
@@ -38,16 +28,10 @@ def create_mannings_ensemble(base_path, runname, mannings_file, proposal, num_si
         run_dir = f"{base_path}/outputs/{runname}_{row}/"
         mkdir(run_dir)
         new_mannings = subset_mannings.copy()
-    
-    for i in range(0, num_sims):
-        run_dir = f"{base_path}/outputs/{runname}_{i}/"
-        mkdir(run_dir)
         
-        new_mannings = subset_mannings.copy()
-        
-        for key in filtered_dict.keys():
-            orig_val = filtered_dict[key][0]
-            new_val = sample_df.iloc[row][key]
+        for col in filtered_df.columns():
+            orig_val = filtered_df[col][0]
+            new_val = theta_df.iloc[row][col]
     
             new_mannings[new_mannings == orig_val] = new_val
 
@@ -61,7 +45,7 @@ def create_mannings_ensemble(base_path, runname, mannings_file, proposal, num_si
         
         runscript_path = st.change_filename_values(
             runscript_path=runscript_path,
-            mannings = f"mannings_{i}.pfb"
+            mannings = f"{mannings_file}_{i}.pfb"
         )
         
         st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
