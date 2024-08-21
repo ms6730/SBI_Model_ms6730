@@ -136,6 +136,40 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_d
     #run.Solver.Linear.Preconditioner.PCMatrixType = 'PFSymmetric'
     run.write(working_directory=pf_out_dir,file_format='yaml')
 
+def get_parflow_output_nc(
+    pf_run_nc_path, 
+    obsv_metadata_path,
+    var_name, 
+    write_path):
+
+
+    ds = xr.open_dataset(pf_run_nc_path)
+    
+    obs_metadata_df = pd.read_csv(obsv_metadata_path)
+    num_sites = len(obs_metadata_df)
+
+    for row in range(num_sites):
+        site_id = str(obs_metadata_df.loc[row,'site_id'])
+        site_id = f"0{site_id}"
+        j = obs_metadata_df.loc[row,'domain_j']
+        i = obs_metadata_df.loc[row,'domain_i']
+        
+        time_series = ds.sel(y = j, x = i)[var_name]
+        ts_df = time_series.to_dataframe().reset_index()
+        ts_df = ts_df[['time',var_name]]
+        ts_df.rename(columns={var_name: site_id}, inplace=True)
+        ts_df.rename(columns={'time': 'date'}, inplace=True)
+        
+        if row == 0: 
+            sim_df = ts_df
+        else:
+            sim_df = pd.merge(sim_df, ts_df, on='date')
+
+    sim_df.loc[:, sim_df.columns != 'date'] = sim_df.loc[:, sim_df.columns != 'date'] / 3600
+    sim_df.to_csv(write_path, index=False)
+
+    return sim_df
+
 def calculate_water_table_depth(ds, dz):
     wtd_list = []
     for t in range(len(ds['time'])):
