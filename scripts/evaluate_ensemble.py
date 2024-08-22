@@ -54,6 +54,8 @@ for mem in range(0,ens_mems):
                                        write_csv=True, csv_path=f"{parflow_output_dir}/{variable}_metrics.csv")
         print("calculated metrics")
 
+# TODO: create x_obs from the flattened and stacked list of all observations, same was is in line 93 below
+
 
 ##### SBI #####
 
@@ -70,9 +72,10 @@ else:
         inference = pickle.load(fp)
 
 # get parameters for last ensemble run
-theta = np.load(f"{base_dir}/{runname}_parameters.npy")
+theta_sim = np.load(f"{base_dir}/{runname}_parameters.npy")
 
 # create 1D torch tensors for observed and simulated outputs
+sim_data = []
 for i in range(ens_mems):
     sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
     if i == 0:
@@ -86,16 +89,12 @@ for i in range(ens_mems):
     sim_df = sim_df[common_columns]
     sim_tensor = torch.tensor(sim_df.values, dtype=torch.float)
     sim_flat = torch.flatten(sim_tensor)
-    reshaped_sim = torch.reshape(sim_flat, (1, sim_flat.numel()))
-
-    if i == 0: 
-        sim_tensor_arr = reshaped_sim
-    else:
-        sim_tensor_arr = torch.cat((sim_tensor_arr, reshaped_sim), dim=0)
+    sim_data.append(sim_flat)
+x_sim = torch.stack(sim_data, dim=0)
 
 # update posterior with new simulations
-_ = inference.append_simulations(theta, x).train(force_first_round_loss=True)
-posterior = inference.build_posterior().set_default_x(obs)
+_ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=True)
+posterior = inference.build_posterior().set_default_x(x_obs)
 
 # update proposal for next round
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
