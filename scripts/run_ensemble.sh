@@ -13,13 +13,13 @@ module load parflow-shared
 
 # Calculate the task ID based on the SLURM_ARRAY_TASK_ID
 task_id=$((SLURM_ARRAY_TASK_ID - 1))
-
+ens_num=0
 runname='sinnemahoning'
 hours=840
 start_date="2002-10-27"
 
 # Generate a unique output file name based on the task ID
-out_dir="/home/at8471/c2_sbi_experiments/sbi_framework/outputs/${runname}_${task_id}"
+out_dir="/home/at8471/c2_sbi_experiments/sbi_framework/outputs/${runname}_${ens_num}_${task_id}"
 
 # Run your Python script with the selected input file and output file
 

@@ -1,55 +1,14 @@
-import numpy as np
 import os
-import glob
 import parflow
 from parflow import Run
-from parflow.tools.io import read_pfb, write_pfb, read_clm
 from parflow.tools.fs import mkdir
-from parflow.tools.settings import set_working_directory
 import subsettools as st
 import hf_hydrodata as hf
-import random
-import shutil
+import numpy as np
 import pandas as pd
 import xarray as xr
-import parflow as pf
-import subprocess
         
 #make functions have keyworded arguments, 
-def create_mannings_ensemble(proposal, base_path, runname, mannings_file, orig_vals_path, num_sims=5, P=1, Q=1, ens_num=0):
-    subset_mannings = read_pfb(f"{base_path}/outputs/{runname}/{mannings_file}.pfb")
-    filtered_df=pd.read_csv(orig_vals_path)
-    
-    theta = proposal.sample((num_sims,)).numpy()
-    theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
-    theta_df.to_csv(f"{base_path}/outputs/{runname}_parameters_ens{ens_num}.csv", index=False)
-    
-    for row in range(len(theta_df)):
-        #
-        run_dir = f"{base_path}/outputs/{runname}_{ens_num}_{row}/"
-        mkdir(run_dir)
-        new_mannings = subset_mannings.copy()
-        
-        for col in filtered_df.columns():
-            orig_val = filtered_df[col][0]
-            new_val = theta_df.iloc[row][col]
-    
-            new_mannings[new_mannings == orig_val] = new_val
-
-        write_pfb(f"{run_dir}/{mannings_file}_{i}.pfb", new_mannings, p=P, q=Q, dist=True)
-
-        st.copy_files(read_dir=f"{base_path}/inputs/{runname}/static", write_dir=run_dir)
-
-        runscript_path = f"{run_dir}/{runname}.yaml"
-        
-        shutil.copy(f"{base_path}/outputs/{runname}/{runname}.yaml", runscript_path)
-        
-        runscript_path = st.change_filename_values(
-            runscript_path=runscript_path,
-            mannings = f"{mannings_file}_{i}.pfb"
-        )
-        
-        st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
 
 def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", P=1, Q=1, hours = 96, tz="UTC"):
     #make directories

@@ -7,9 +7,8 @@ from parflow import Run
 from parflow.tools.settings import set_working_directory
 from pathlib import Path
 from glob import glob
-from parflow.tools.io import read_pfb, write_pfb, read_clm, read_pfb_sequence
+from parflow.tools.io import read_pfb, read_clm, read_pfb_sequence
 from pf_ens_functions import calculate_water_table_depth, calculate_flow
-from datetime import datetime, timedelta
 import xarray as xr
 import numpy as np
 import pandas as pd

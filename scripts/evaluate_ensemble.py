@@ -21,7 +21,7 @@ temporal_resolution = "daily"
 runname="sinnemahoning"
 
 variable_list = ["streamflow"]
-ens_mems = 10
+ens_mems = 5
 
 # Evaluate
 for mem in range(0,ens_mems):
@@ -71,11 +71,36 @@ else:
 # get parameters for last ensemble run
 theta = np.load(f"{base_dir}/{runname}_parameters.npy")
 
-# TODO: need to get parameters results x for these sims, move over concatenated data vector stuff
+#create 1D torch tensors for observed and simulated outputs
+for i in range(0, ens_mems):
+    sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
+    if i == 0:
+        obsv_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_df.csv').drop('date', axis=1)
+        common_columns = sim_df.columns.intersection(obsv_df.columns)
+        obsv_df = obsv_df[common_columns]
+        obsv_tensor = torch.tensor(obsv_df.values, dtype=torch.float)
+        obsv_flat = torch.flatten(obsv_tensor)
+        reshaped_obsv = torch.reshape(obsv_flat, (1, obsv_flat.numel()))
+
+    sim_df = sim_df[common_columns]
+    sim_tensor = torch.tensor(sim_df.values, dtype=torch.float)
+    sim_flat = torch.flatten(sim_tensor)
+    reshaped_sim = torch.reshape(sim_flat, (1, sim_flat.numel()))
+
+    if i == 0: 
+        sim_tensor_arr = reshaped_sim
+    else:
+        sim_tensor_arr = torch.cat((sim_tensor_arr, reshaped_sim), dim=0)
 
 # update posterior with new simulations
 _ = inference.append_simulations(theta, x).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(obs)
+
+#this section wasn't originally here, i assume we still want to do restricted proposal?
+accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_samples_to_estimate_support=num_samples)
+
+# update prior for next round
+proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 
 # save results, backup existing ones
 filename = f"{base_dir}/{runname}_inference.pkl"
@@ -85,3 +110,12 @@ with open(filename, "wb") as fp:
 filename = f"{base_dir}/{runname}_posterior.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)
+
+filename = f"{base_dir}/{runname}_proposal.pkl"
+with open(filename, "wb") as fp:
+    pickle.dump(proposal, fp)
+
+
+
+
+

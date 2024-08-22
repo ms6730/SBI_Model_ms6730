@@ -14,12 +14,9 @@
 base_dir='/home/at8471/c2_sbi_experiments/sbi_framework'
 runname='sinnemahoning'
 huc='02050202'
-hours=48
+hours=840
 start="2002-10-27"
-end="2002-10-29"
-#hours=840
-#start="2002-10-27"
-#end="2002-12-01"
+end="2002-12-01"
 timezone="EDT"
 P=4
 Q=4

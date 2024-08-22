@@ -170,7 +170,7 @@ for i in range(len(all_vals)):
 filtered_dict = {k: v for k, v in mannings_dict.items() if v in subset_vals}
 filtered_df = pd.DataFrame(filtered_dict)
 #write out the filtered df of original values to be used as a static input during ensemble creation
-filtered_df.to_csv(f"{base_dir}/outputs/{runname}_filtered_orig_vals.csv", index=False)
+filtered_df.to_csv(f"{base_dir}/{runname}_filtered_orig_vals.csv", index=False)
 
 #create prior for subset mannings map
 orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy())
@@ -179,7 +179,7 @@ maxs = orig_mannings*scalar
 prior = Uniform(mins, maxs)
 
 #save the prior
-with open(f'{base_dir}/outputs/{runname}_prior.pkl', 'wb') as f:
+with open(f'{base_dir}/{runname}_prior.pkl', 'wb') as f:
     pickle.dump(prior, f)
 
 
