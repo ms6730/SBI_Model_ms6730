@@ -13,83 +13,68 @@ from plots import plot_obs_locations, plot_time_series, plot_compare_scatter, pl
 base_dir = "/home/at8471/c2_sbi_experiments/sbi_framework"
 grid = "conus2"
 huc_list = ["02050202"]
-ij_bounds, mask = subsettools.define_huc_domain(huc_list, grid)
-
 start_date = "2002-10-27"
 end_date = "2002-12-01"
 temporal_resolution = "daily"
-
 runname="sinnemahoning"
-
 variable_list = ["streamflow"]
-ens_mems = 5
+num_sims = 5
+ens_num=0
+metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
+obsv_path=f'{base_dir}/outputs/{runname}/streamflow_daily_df.csv'
+
+ij_bounds, mask = subsettools.define_huc_domain(huc_list, grid)
 
 # Evaluate
-for mem in range(0,ens_mems):
-    parflow_output_dir=f"{base_dir}/outputs/{runname}_{mem}"
+for sim in range(0,num_sims):
     
-    for variable in variable_list:
+    parflow_output_dir=f"{base_dir}/outputs/{runname}_{ens_num}_{sim}"
+    nc_path = f"{parflow_output_dir}/{runname}_{sim}.nc"
+    write_path=f"{parflow_output_dir}/{variable}_{temporal_resolution}_pfsim.csv"
     
-        # Get observation data for sites in domain
-        obs_metadata_df, obs_data_df = get_observations(mask, ij_bounds, grid, start_date, end_date,
-                                                        variable, temporal_resolution)
-        print("created obsv df")
-        
-        obs_metadata_df.to_csv(f"{parflow_output_dir}/{variable}_{temporal_resolution}_metadf.csv", index=False)
-        obs_data_df.to_csv(f"{parflow_output_dir}/{variable}_{temporal_resolution}_df.csv", index=False)
-    
+    for variable in variable_list:  
         # Get ParFlow outputs matching site locations
-        parflow_data_df = get_parflow_output_nc(f"{parflow_output_dir}/{runname}_{mem}.nc", f'{parflow_output_dir}/{variable}_{temporal_resolution}_metadf.csv',var_name = variable, write_path = f"{parflow_output_dir}/{variable}_{temporal_resolution}_pfsim.csv")
-    
+        parflow_data_df = get_parflow_output_nc(nc_path, metadata_path, variable, write_path)
         print("created pf df")
-        
-        # Calculate metrics comparing ParFlow vs. observations
-        obs_data_df = obs_data_df.dropna(axis=1)
-        common_columns = obs_data_df.columns.intersection(parflow_data_df.columns)
-        obs_data_df = obs_data_df[common_columns]
-        parflow_data_df = parflow_data_df[common_columns]
-        obs_metadata_df= obs_metadata_df[obs_metadata_df['site_id'].isin(common_columns)]
-        
-        metrics_df = calculate_metrics(obs_data_df, parflow_data_df, obs_metadata_df,
-                                       write_csv=True, csv_path=f"{parflow_output_dir}/{variable}_metrics.csv")
-        print("calculated metrics")
-
-# TODO: create x_obs from the flattened and stacked list of all observations, same was is in line 93 below
-
 
 ##### SBI #####
 
 # try loading existing inference structure
 # if not there, create new one from prior
 try:
-    fp = open(f"{base_dir}/{runname}_inference.pkl", "rb")
+    fp = open(f"{base_dir}/{runname}_proposal.pkl", "rb")
 except FileNotFoundError:
     with open(f"{base_dir}/{runname}_prior.pkl", "rb") as fp:
         prior = pickle.load(fp)
     inference = SNPE(prior=prior)
 else:
     with fp:
-        inference = pickle.load(fp)
-
+        prior = pickle.load(fp)
+    fi = open(f"{base_dir}/{runname}_inference.pkl", "rb")
+    inference=pickle.load(fi)
+    
+        
 # get parameters for last ensemble run
-theta_sim = np.load(f"{base_dir}/{runname}_parameters.npy")
+theta_sim = np.load(f"{base_dir}/{runname}_parameters_ens{ens_num}.npy")
 
 # create 1D torch tensors for observed and simulated outputs
 sim_data = []
+
 for i in range(ens_mems):
-    sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
+    sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{ens_num}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
     if i == 0:
-        obsv_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_df.csv').drop('date', axis=1)
+        obsv_df = pd.read_csv(obsv_path).drop('date', axis=1)
         common_columns = sim_df.columns.intersection(obsv_df.columns)
         obsv_df = obsv_df[common_columns]
         obsv_tensor = torch.tensor(obsv_df.values, dtype=torch.float)
         obsv_flat = torch.flatten(obsv_tensor)
-        reshaped_obsv = torch.reshape(obsv_flat, (1, obsv_flat.numel()))
+        x_obsv = torch.reshape(obsv_flat, (1, obsv_flat.numel()))
 
     sim_df = sim_df[common_columns]
     sim_tensor = torch.tensor(sim_df.values, dtype=torch.float)
     sim_flat = torch.flatten(sim_tensor)
     sim_data.append(sim_flat)
+
 x_sim = torch.stack(sim_data, dim=0)
 
 # update posterior with new simulations
