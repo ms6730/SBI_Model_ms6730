@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import subsettools
 from sbi.inference import SNPE
+from sbi.utils import get_density_thresholder, RestrictedPrior
 
 model_eval_path = os.path.abspath('/home/at8471/c2_sbi_experiments/model_evaluation')
 sys.path.append(model_eval_path)
@@ -71,8 +72,8 @@ else:
 # get parameters for last ensemble run
 theta = np.load(f"{base_dir}/{runname}_parameters.npy")
 
-#create 1D torch tensors for observed and simulated outputs
-for i in range(0, ens_mems):
+# create 1D torch tensors for observed and simulated outputs
+for i in range(ens_mems):
     sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
     if i == 0:
         obsv_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{i}/streamflow_daily_df.csv').drop('date', axis=1)
@@ -96,13 +97,11 @@ for i in range(0, ens_mems):
 _ = inference.append_simulations(theta, x).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(obs)
 
-#this section wasn't originally here, i assume we still want to do restricted proposal?
+# update proposal for next round
+proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_samples_to_estimate_support=num_samples)
 
-# update prior for next round
-proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-
-# save results, backup existing ones
+# save updated results
 filename = f"{base_dir}/{runname}_inference.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)

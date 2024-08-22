@@ -22,7 +22,7 @@ Q = 4
 
 # read the latest proposal
 try:
-    fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
+    fp = open(f"{base_dir}/{runname}_proposal.pkl", "rb")
 except FileNotFoundError:
     fp = open(f"{base_dir}/{runname}_prior.pkl", "rb")
 proposal = pickle.load(fp)
@@ -62,10 +62,14 @@ for row in range(len(theta_df)):
     
     st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
 
-#save current inference and posterior
+# save current inference, proposal and posterior
 try:
     src_file = f"{base_dir}/{runname}_posterior.pkl"
     dest_file=f"{base_dir}/{runname}_posterior{ens_num-1}.pkl"
+    shutil.copyfile(src_file, dest_file)
+
+    src_file = f"{base_dir}/{runname}_proposal.pkl"
+    dest_file=f"{base_dir}/{runname}_proposal{ens_num-1}.pkl"
     shutil.copyfile(src_file, dest_file)
     
     src_file = f"{base_dir}/{runname}_inference.pkl"
