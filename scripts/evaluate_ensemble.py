@@ -1,13 +1,12 @@
+import os
+import pickle
 import numpy as np
 import pandas as pd
 import subsettools
 from sbi.inference import SNPE
 from sbi.utils import get_density_thresholder, RestrictedPrior
-
-model_eval_path = os.path.abspath('/home/at8471/c2_sbi_experiments/model_evaluation')
-sys.path.append(model_eval_path)
-from model_evaluation import get_observations, get_parflow_output, calculate_metrics, explore_available_observations, get_parflow_output_nc
-from plots import plot_obs_locations, plot_time_series, plot_compare_scatter, plot_metric_map
+from pf_ens_functions import get_parflow_output_nc
+import torch
 
 # Define inputs to workflow
 base_dir = "/home/at8471/c2_sbi_experiments/sbi_framework"
@@ -20,6 +19,8 @@ runname="sinnemahoning"
 variable_list = ["streamflow"]
 num_sims = 5
 ens_num=0
+num_samples = 100
+quantile = 1e-4
 metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
 obsv_path=f'{base_dir}/outputs/{runname}/streamflow_daily_df.csv'
 
@@ -30,7 +31,7 @@ for sim in range(0,num_sims):
     
     parflow_output_dir=f"{base_dir}/outputs/{runname}_{ens_num}_{sim}"
     nc_path = f"{parflow_output_dir}/{runname}_{sim}.nc"
-    write_path=f"{parflow_output_dir}/{variable}_{temporal_resolution}_pfsim.csv"
+    write_path=f"{parflow_output_dir}/{variable_list[0]}_{temporal_resolution}_pfsim.csv"
     
     for variable in variable_list:  
         # Get ParFlow outputs matching site locations
@@ -55,20 +56,22 @@ else:
     
         
 # get parameters for last ensemble run
-theta_sim = np.load(f"{base_dir}/{runname}_parameters_ens{ens_num}.npy")
+theta_sim = pd.read_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv")
+theta_sim = torch.tensor(theta_sim.values, dtype=torch.float)
 
 # create 1D torch tensors for observed and simulated outputs
 sim_data = []
 
-for i in range(ens_mems):
+for i in range(num_sims):
     sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{ens_num}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
     if i == 0:
         obsv_df = pd.read_csv(obsv_path).drop('date', axis=1)
+        obsv_df = obsv_df[:-1]
         common_columns = sim_df.columns.intersection(obsv_df.columns)
         obsv_df = obsv_df[common_columns]
         obsv_tensor = torch.tensor(obsv_df.values, dtype=torch.float)
         obsv_flat = torch.flatten(obsv_tensor)
-        x_obsv = torch.reshape(obsv_flat, (1, obsv_flat.numel()))
+        x_obs = torch.reshape(obsv_flat, (1, obsv_flat.numel()))
 
     sim_df = sim_df[common_columns]
     sim_tensor = torch.tensor(sim_df.values, dtype=torch.float)
@@ -82,8 +85,8 @@ _ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=
 posterior = inference.build_posterior().set_default_x(x_obs)
 
 # update proposal for next round
+accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-accept_reject_fn = get_density_thresholder(posterior, quantile=quantile, num_samples_to_estimate_support=num_samples)
 
 # save updated results
 filename = f"{base_dir}/{runname}_inference.pkl"
