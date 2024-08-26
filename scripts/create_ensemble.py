@@ -6,19 +6,25 @@ from parflow.tools.io import read_pfb, write_pfb
 from parflow.tools.fs import mkdir
 import subsettools as st
 import pandas as pd
+import json 
 
-ens_num=0
-runname = 'sinnemahoning'
-base_dir = '/home/at8471/c2_sbi_experiments/sbi_framework'
-mannings_file = 'mannings'
+#read in variables from the json file
+json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
+with open(json_path, 'r') as file:
+    settings = json.load(file)
+    
+ens_num=settings['ens_num']
+base_dir = settings['base_dir']
+runname = settings['runname']
+huc = settings['huc']
+num_hours = settings['hours']
+start = settings['start']
+end = settings['end']
+mannings_file = settings['base_mannings_file']
+num_sims = settings['num_sims']
+P = settings['P']
+Q = settings['Q']
 orig_vals_path = f"{base_dir}/{runname}_filtered_orig_vals.csv"
-huc = '02050202'
-num_sims = 5
-start = "2002-10-27"
-end = "2002-12-01"
-num_hours = 840
-P = 4
-Q = 4
 
 # read the latest proposal
 try:

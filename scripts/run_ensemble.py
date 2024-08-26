@@ -14,12 +14,21 @@ import numpy as np
 import pandas as pd
 import parflow as pf
 
-out_dir = sys.argv[1]
-runname = sys.argv[2]
-i = sys.argv[3]
-num_hours = float(sys.argv[4])
-start = sys.argv[5]
-      
+
+#read in variables from the json file
+i = sys.argv[1]
+json_path = sys.argv[2]
+
+with open(json_path, 'r') as file:
+    settings = json.load(file)
+    
+base_dir = settings['base_dir']
+runname = settings['runname']
+start = settings['start']
+num_hours = settings['hours']
+ens_num = settings['ens_num']
+
+out_dir=f"{base_dir}/outputs/{runname}_{ens_num}_{i}"
 set_working_directory(f'{out_dir}')
 
 run = Run.from_definition(f'{out_dir}/{runname}.yaml')

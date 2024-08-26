@@ -9,19 +9,12 @@
 #SBATCH --time=01:00:00
 #SBATCH --array=1-5%3
 
-module load parflow-shared
-
 # Calculate the task ID based on the SLURM_ARRAY_TASK_ID
 task_id=$((SLURM_ARRAY_TASK_ID - 1))
-ens_num=0
-runname='sinnemahoning'
-hours=840
-start_date="2002-10-27"
 
-# Generate a unique output file name based on the task ID
-out_dir="/home/at8471/c2_sbi_experiments/sbi_framework/outputs/${runname}_${ens_num}_${task_id}"
+#set path to json file with run settings
+json_path='/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json'
 
-# Run your Python script with the selected input file and output file
-
-python3 run_ensemble.py "$out_dir" "$runname" "$task_id" "$hours" "$start_date"
+# Run your Python script
+python3 run_ensemble.py "$task_id" "$json_path"
 

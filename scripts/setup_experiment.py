@@ -22,8 +22,9 @@ import hf_hydrodata as hf
 import torch
 from torch.distributions import Uniform
 import pickle
+import json
 
-#read in variables from the job script
+#read in variables from the json file
 json_path = sys.argv[1]
 with open(json_path, 'r') as file:
     settings = json.load(file)
@@ -37,10 +38,7 @@ end = settings['end']
 timezone = settings['timezone']
 P = settings['P']
 Q = settings['Q']
-ens_mems = settings['num_sims']
 scalar = settings['init_prior_scalar']
-
-#set up the baseline run for the target HUC for this experiment
 grid = settings['grid']
 temporal_resolution = settings['temporal_resolution']
 variable_list = settings['variable_list']

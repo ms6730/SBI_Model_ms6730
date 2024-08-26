@@ -7,24 +7,28 @@ from sbi.inference import SNPE
 from sbi.utils import get_density_thresholder, RestrictedPrior
 from pf_ens_functions import get_parflow_output_nc
 import torch
+import json
 
-# Define inputs to workflow
-base_dir = "/home/at8471/c2_sbi_experiments/sbi_framework"
-grid = "conus2"
-huc_list = ["02050202"]
-start_date = "2002-10-27"
-end_date = "2002-12-01"
-temporal_resolution = "daily"
-runname="sinnemahoning"
-variable_list = ["streamflow"]
-num_sims = 5
-ens_num=0
-num_samples = 100
-quantile = 1e-4
+#read in variables from the json file
+json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
+with open(json_path, 'r') as file:
+    settings = json.load(file)
+    
+base_dir = settings['base_dir']
+grid = settings['grid']
+huc = settings['huc']
+temporal_resolution = settings['temporal_resolution']
+runname=settings['runname']
+variable_list = settings['variable_list']
+num_sims = settings['num_sims']
+ens_num=settings['ens_num']
+num_samples = settings['num_smaples']
+quantile = settings['quantile']
+
 metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
 obsv_path=f'{base_dir}/outputs/{runname}/streamflow_daily_df.csv'
 
-ij_bounds, mask = subsettools.define_huc_domain(huc_list, grid)
+ij_bounds, mask = subsettools.define_huc_domain([huc], grid)
 
 # Evaluate
 for sim in range(0,num_sims):
