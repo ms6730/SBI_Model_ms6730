@@ -13,6 +13,7 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 import parflow as pf
+import json
 
 
 #read in variables from the json file
