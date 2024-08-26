@@ -24,22 +24,26 @@ from torch.distributions import Uniform
 import pickle
 
 #read in variables from the job script
-base_dir = sys.argv[1]
-runname = sys.argv[2]
-huc = sys.argv[3]
-num_hours = float(sys.argv[4])
-start = sys.argv[5]
-end = sys.argv[6]
-timezone = sys.argv[7]
-P = int(sys.argv[8])
-Q = int(sys.argv[9])
-ens_mems = int(sys.argv[10])
-scalar = int(sys.argv[11])
+json_path = sys.argv[1]
+with open(json_path, 'r') as file:
+    settings = json.load(file)
+  
+base_dir = settings['base_dir']
+runname = settings['runname']
+huc = settings['huc']
+num_hours = settings['hours']
+start = settings['start']
+end = settings['end']
+timezone = settings['timezone']
+P = settings['P']
+Q = settings['Q']
+ens_mems = settings['num_sims']
+scalar = settings['init_prior_scalar']
 
 #set up the baseline run for the target HUC for this experiment
-grid = "conus2"
-temporal_resolution = "daily"
-variable_list = ["streamflow"]
+grid = settings['grid']
+temporal_resolution = settings['temporal_resolution']
+variable_list = settings['variable_list']
 
 setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours)
 

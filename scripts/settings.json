@@ -1,0 +1,20 @@
+{
+	"base_dir": "/home/at8471/c2_sbi_experiments/sbi_framework",
+	"runname": "sinnemahoning",
+	"huc": "02050202",
+	"start": "2003-10-27",
+	"end": "2003-12-01",
+	"hours": 840,
+	"timezone": "EDT",
+	"grid": "conus2",
+	"P": 4,
+	"Q": 4,
+	"num_sims": 3,
+	"init_prior_scalar": 2,
+	"base_mannings_file": "mannings",
+	"variable_list": ["streamflow"],
+	"num_samples": 100,
+	"quantile": 0.0004,
+	"temporal_resolution": "daily",
+	"ens_num": 0
+}
