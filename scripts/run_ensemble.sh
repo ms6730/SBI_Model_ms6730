@@ -6,8 +6,8 @@
 #SBATCH --ntasks=16      # total number of tasks per node
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --mem-per-cpu=4G         # memory per cpu-core (4G is default)
-#SBATCH --time=01:00:00
-#SBATCH --array=1-5%3
+#SBATCH --time=16:00:00
+#SBATCH --array=1-100%5
 
 # Calculate the task ID based on the SLURM_ARRAY_TASK_ID
 task_id=$((SLURM_ARRAY_TASK_ID - 1))

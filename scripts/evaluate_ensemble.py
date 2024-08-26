@@ -24,9 +24,10 @@ num_sims = settings['num_sims']
 ens_num=settings['ens_num']
 num_samples = settings['num_smaples']
 quantile = settings['quantile']
+obsv_path=settings['observation_path']
 
 metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
-obsv_path=f'{base_dir}/outputs/{runname}/streamflow_daily_df.csv'
+
 
 ij_bounds, mask = subsettools.define_huc_domain([huc], grid)
 
