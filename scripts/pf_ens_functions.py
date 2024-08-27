@@ -47,16 +47,16 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, P, Q, hours, grid="c
         runname=runname,
         forcing_dir=forcing_dir,
     )
-    
-    st.copy_files(read_dir=static_write_dir, write_dir=pf_out_dir)
 
     if init_press_file_path is not None:
-        st.copy_files(read_dir=init_press_file_path, write_dir=pf_out_dir)
+        st.copy_files(read_dir=init_press_file_path, write_dir=static_write_dir)
         init_press_path = os.path.basename(init_press_file_path)
     else:
         init_press_path = os.path.basename(static_paths["ss_pressure_head"])
         
     depth_to_bedrock_path = os.path.basename(static_paths["pf_flowbarrier"])
+
+    st.copy_files(read_dir=static_write_dir, write_dir=pf_out_dir)
     
     runscript_path = st.change_filename_values(
         runscript_path=runscript_path,
