@@ -10,7 +10,7 @@ import xarray as xr
         
 #make functions have keyworded arguments, 
 
-def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", P=1, Q=1, hours = 96, tz="UTC"):
+def setup_baseline_run(base_dir, runname, hucs, start, end, P, Q, hours, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", tz="UTC", init_press_file_path=None):
     #make directories
     input_dir = os.path.join(base_dir, "inputs", f"{runname}")
     output_dir = os.path.join(base_dir, "outputs")
@@ -49,8 +49,13 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_d
     )
     
     st.copy_files(read_dir=static_write_dir, write_dir=pf_out_dir)
-    
-    init_press_path = os.path.basename(static_paths["ss_pressure_head"])
+
+    if init_press_file_path is not None:
+        st.copy_files(read_dir=init_press_file_path, write_dir=pf_out_dir)
+        init_press_path = os.path.basename(init_press_file_path)
+    else:
+        init_press_path = os.path.basename(static_paths["ss_pressure_head"])
+        
     depth_to_bedrock_path = os.path.basename(static_paths["pf_flowbarrier"])
     
     runscript_path = st.change_filename_values(
@@ -68,7 +73,7 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, grid="conus2", var_d
 
     run = Run.from_definition(runscript_path)
     run.TimingInfo.StopTime = hours 
-    run.Solver.CLM.MetFileName = 'CW3E'
+    run.Solver.CLM.MetFileName = forcing_ds
     #turn on for running on a gpu parflow build
     #run.Solver.Linear.Preconditioner = 'MGSemi'
     #run.Solver.Nonlinear.UseJacobian = True

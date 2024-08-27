@@ -72,6 +72,7 @@ start=start
 pressure_files = sorted(glob(f'{out_dir}/{runname}.out.press.*.pfb')[1:])
 saturation_files = sorted(glob(f'{out_dir}/{runname}.out.satur.*.pfb')[1:])
 clm_files = sorted(glob(f'{out_dir}/{runname}.out.clm_output.*.pfb'))
+last_press = pf.read_pfb(pressure_files[-1])
 
 timesteps = pd.date_range(start, periods=len(pressure_files), freq='1H')
 ds = xr.Dataset()
@@ -134,6 +135,9 @@ ds.to_netcdf(f'{out_dir}/{runname}.nc', mode='w')
 # Clean up
 del ds
 del clm
+
+pf.write_pfb(f"{out_dir}/{end}_press.pfb",last_press,P,Q,dist=True)
+
 _ = [os.remove(os.path.abspath(f)) for f in pressure_files]
 _ = [os.remove(os.path.abspath(f)+'.dist') for f in pressure_files]
 _ = [os.remove(os.path.abspath(f)) for f in saturation_files]
