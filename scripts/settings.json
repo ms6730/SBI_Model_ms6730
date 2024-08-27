@@ -9,6 +9,7 @@
 	"grid": "conus2",
 	"P": 4,
 	"Q": 4,
+	"init_press_path":"/home/at8471/c2_sbi_experiments/sbi_framework/outputs/sinnemahoning_spinup_press/2003-10-27_press.pfb",
 	"num_sims": 100,
 	"init_prior_scalar": 2,
 	"base_mannings_file": "mannings",
