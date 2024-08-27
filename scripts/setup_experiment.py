@@ -42,8 +42,12 @@ scalar = settings['init_prior_scalar']
 grid = settings['grid']
 temporal_resolution = settings['temporal_resolution']
 variable_list = settings['variable_list']
+init_press_path= settings['init_press_path']
 
-setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours)
+if os.path.isfile(init_press_path):
+    setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours, init_press_path)
+else:
+    setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours)
 
 #run the baseline
 out_dir = f"{base_dir}/outputs/{runname}"
