@@ -1,4 +1,5 @@
 import pickle
+import cloudpickle
 import shutil
 import parflow
 from parflow import Run
@@ -25,20 +26,21 @@ num_sims = settings['num_sims']
 P = settings['P']
 Q = settings['Q']
 orig_vals_path = f"{base_dir}/{runname}_filtered_orig_vals.csv"
+filtered_df=pd.read_csv(orig_vals_path)
 
 # read the latest proposal
 try:
-    fp = open(f"{base_dir}/{runname}_proposal.pkl", "rb")
+    with open(f"{base_dir}/{runname}_posterior.pkl", "rb") as fp:
+        prior = pickle.load(fp)
 except FileNotFoundError:
-    fp = open(f"{base_dir}/{runname}_prior.pkl", "rb")
-proposal = pickle.load(fp)
-
-subset_mannings = read_pfb(f"{base_dir}/outputs/{runname}/{mannings_file}.pfb")
-filtered_df=pd.read_csv(orig_vals_path)
-
-theta = proposal.sample((num_sims,)).numpy()
+    with open(f"{base_dir}/{runname}_prior.pkl", "rb") as fp:
+        prior = pickle.load(fp)
+    
+theta = prior.sample((num_sims,)).numpy()
 theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
+
+subset_mannings = read_pfb(f"{base_dir}/outputs/{runname}/{mannings_file}.pfb")
 
 for row in range(len(theta_df)):
     run_dir = f"{base_dir}/outputs/{runname}_{ens_num}_{row}/"

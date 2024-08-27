@@ -1,4 +1,5 @@
 import os
+import cloudpickle
 import pickle
 import numpy as np
 import pandas as pd
@@ -22,7 +23,7 @@ runname=settings['runname']
 variable_list = settings['variable_list']
 num_sims = settings['num_sims']
 ens_num=settings['ens_num']
-num_samples = settings['num_smaples']
+num_samples = settings['num_samples']
 quantile = settings['quantile']
 obsv_path=settings['observation_path']
 
@@ -41,7 +42,6 @@ for sim in range(0,num_sims):
     for variable in variable_list:  
         # Get ParFlow outputs matching site locations
         parflow_data_df = get_parflow_output_nc(nc_path, metadata_path, variable, write_path)
-        print("created pf df")
 
 ##### SBI #####
 
@@ -58,8 +58,7 @@ else:
         prior = pickle.load(fp)
     fi = open(f"{base_dir}/{runname}_inference.pkl", "rb")
     inference=pickle.load(fi)
-    
-        
+
 # get parameters for last ensemble run
 theta_sim = pd.read_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv")
 theta_sim = torch.tensor(theta_sim.values, dtype=torch.float)
@@ -67,11 +66,12 @@ theta_sim = torch.tensor(theta_sim.values, dtype=torch.float)
 # create 1D torch tensors for observed and simulated outputs
 sim_data = []
 
-for i in range(num_sims):
+for i in range(0,num_sims):
     sim_df = pd.read_csv(f'{base_dir}/outputs/{runname}_{ens_num}_{i}/streamflow_daily_pfsim.csv').drop('date', axis=1)
     sim_df = sim_df[5:]#dropping first 5 days from evaluation for spinup
     if i == 0:
         obsv_df = pd.read_csv(obsv_path).drop('date', axis=1)
+        obsv_df = obsv_df.dropna(axis=1)
         obsv_df = obsv_df[5:-1]#dropping first 5 days from evaluation for spinup and last day because hf hydrodata is inclusive, subset tools is not
         common_columns = sim_df.columns.intersection(obsv_df.columns)
         obsv_df = obsv_df[common_columns]
@@ -98,14 +98,17 @@ proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 filename = f"{base_dir}/{runname}_inference.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)
-
+print("pickled inference")
 filename = f"{base_dir}/{runname}_posterior.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)
+print("pickled posterior")
 
-filename = f"{base_dir}/{runname}_proposal.pkl"
-with open(filename, "wb") as fp:
-    pickle.dump(proposal, fp)
+# filename = f"{base_dir}/{runname}_proposal.pth"
+# torch.save(proposal, filename)
+# print("torch saved proposal")
+# with open(filename, "wb") as fp:
+#     pickle.dump(proposal, fp)
 
 
 
