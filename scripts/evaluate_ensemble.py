@@ -90,11 +90,8 @@ x_sim = torch.stack(sim_data, dim=0)
 _ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(x_obs)
 
-# update proposal for next round
-accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
-proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
+# update inference and posterior
 
-# save updated results
 filename = f"{base_dir}/{runname}_inference.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)
@@ -104,11 +101,7 @@ with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)
 print("pickled posterior")
 
-# filename = f"{base_dir}/{runname}_proposal.pth"
-# torch.save(proposal, filename)
-# print("torch saved proposal")
-# with open(filename, "wb") as fp:
-#     pickle.dump(proposal, fp)
+
 
 
 

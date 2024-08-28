@@ -8,6 +8,7 @@ from parflow.tools.fs import mkdir
 import subsettools as st
 import pandas as pd
 import json 
+from sbi.utils import get_density_thresholder, RestrictedPrior
 
 #read in variables from the json file
 json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
@@ -23,20 +24,27 @@ start = settings['start']
 end = settings['end']
 mannings_file = settings['base_mannings_file']
 num_sims = settings['num_sims']
+num_samples = settings['num_samples']
+quantile = settings['quantile']
 P = settings['P']
 Q = settings['Q']
 orig_vals_path = f"{base_dir}/{runname}_filtered_orig_vals.csv"
 filtered_df=pd.read_csv(orig_vals_path)
 
-# read the latest proposal
-try:
-    with open(f"{base_dir}/{runname}_posterior.pkl", "rb") as fp:
-        prior = pickle.load(fp)
-except FileNotFoundError:
-    with open(f"{base_dir}/{runname}_prior.pkl", "rb") as fp:
-        prior = pickle.load(fp)
+# read the prior/posterior to sample
+if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):
+    fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
+    posterior = pickle.load(fp)
+    fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
+    prior = pickle.load(fp)
+    accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
+    proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
+    theta = proposal.sample((num_sims,)).numpy()
+else:
+    fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
+    prior = pickle.load(fp)  
+    theta = prior.sample((num_sims,)).numpy()
     
-theta = prior.sample((num_sims,)).numpy()
 theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
 
