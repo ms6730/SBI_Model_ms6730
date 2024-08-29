@@ -7,9 +7,9 @@ import hf_hydrodata as hf
 import numpy as np
 import pandas as pd
 import xarray as xr
+import shutil
         
 #make functions have keyworded arguments, 
-
 def setup_baseline_run(base_dir, runname, hucs, start, end, P, Q, hours, grid="conus2", var_ds="conus2_domain", forcing_ds="CW3E", tz="UTC", init_press_file_path=None):
     #make directories
     input_dir = os.path.join(base_dir, "inputs", f"{runname}")
@@ -49,7 +49,7 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, P, Q, hours, grid="c
     )
 
     if init_press_file_path is not None:
-        st.copy_files(read_dir=init_press_file_path, write_dir=static_write_dir)
+        shutil.copy(init_press_file_path, static_write_dir)
         init_press_path = os.path.basename(init_press_file_path)
     else:
         init_press_path = os.path.basename(static_paths["ss_pressure_head"])

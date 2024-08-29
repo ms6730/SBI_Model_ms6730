@@ -40,7 +40,6 @@ if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
     prior = pickle.load(fp)
     fp.close()
-    print(prior.dtype())
     
     accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
     proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
@@ -64,9 +63,7 @@ for row in range(len(theta_df)):
     new_mannings = subset_mannings.copy()
     
     for col in filtered_df.columns:
-        print(col)
         orig_val = filtered_df[col][0]
-        print(orig_val)
         new_val = theta_df.iloc[row][col]
 
         new_mannings[new_mannings == orig_val] = new_val
@@ -90,10 +87,6 @@ for row in range(len(theta_df)):
 try:
     src_file = f"{base_dir}/{runname}_posterior.pkl"
     dest_file=f"{base_dir}/{runname}_posterior{ens_num-1}.pkl"
-    shutil.copyfile(src_file, dest_file)
-
-    src_file = f"{base_dir}/{runname}_proposal.pkl"
-    dest_file=f"{base_dir}/{runname}_proposal{ens_num-1}.pkl"
     shutil.copyfile(src_file, dest_file)
     
     src_file = f"{base_dir}/{runname}_inference.pkl"
