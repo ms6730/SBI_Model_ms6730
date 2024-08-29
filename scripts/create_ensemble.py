@@ -9,6 +9,7 @@ import subsettools as st
 import pandas as pd
 import json 
 from sbi.utils import get_density_thresholder, RestrictedPrior
+import random
 
 #read in variables from the json file
 json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
@@ -28,8 +29,13 @@ num_samples = settings['num_samples']
 quantile = settings['quantile']
 P = settings['P']
 Q = settings['Q']
+seed=settings['random_seed']
 orig_vals_path = f"{base_dir}/{runname}_filtered_orig_vals.csv"
 filtered_df=pd.read_csv(orig_vals_path)
+
+#set the random seed
+random.seed(seed)
+np.random.seed(seed)
 
 # read the prior/posterior to sample
 if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):

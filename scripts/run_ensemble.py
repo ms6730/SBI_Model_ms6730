@@ -15,7 +15,6 @@ import pandas as pd
 import parflow as pf
 import json
 
-
 #read in variables from the json file
 i = sys.argv[1]
 json_path = sys.argv[2]

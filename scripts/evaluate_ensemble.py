@@ -8,6 +8,7 @@ from sbi.utils import get_density_thresholder, RestrictedPrior
 from pf_ens_functions import get_parflow_output_nc
 import torch
 import json
+import random
 
 #read in variables from the json file
 json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
@@ -25,8 +26,13 @@ ens_num=settings['ens_num']
 num_samples = settings['num_samples']
 quantile = settings['quantile']
 obsv_path=settings['observation_path']
-
+seed=settings['random_seed']
 metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
+
+#set the random seed
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 
 ij_bounds, mask = subsettools.define_huc_domain([huc], grid)
@@ -66,8 +72,8 @@ for i in range(0,num_sims):
     sim_df = sim_df[5:]#dropping first 5 days from evaluation for spinup
     if i == 0:
         obsv_df = pd.read_csv(obsv_path).drop('date', axis=1)
-        obsv_df = obsv_df.dropna(axis=1)
-        obsv_df = obsv_df[5:-1]#dropping first 5 days from evaluation for spinup and last day because hf hydrodata is inclusive, subset tools is not
+        #obsv_df = obsv_df.dropna(axis=1)#don't need to do this when using simulated data
+        obsv_df = obsv_df[5:]#dropping first 5 days
         common_columns = sim_df.columns.intersection(obsv_df.columns)
         obsv_df = obsv_df[common_columns]
         obsv_tensor = torch.tensor(obsv_df.values, dtype=torch.float)
@@ -87,9 +93,10 @@ posterior = inference.build_posterior().set_default_x(x_obs)
 accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
 proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
 
-theta = proposal.sample((num_sims,))
-theta = theta.numpy()
-theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
+theta_torch = proposal.sample((num_sims,))
+theta = theta_torch.numpy()
+theta.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
+
 
 # update inference and posterior
 filename = f"{base_dir}/{runname}_inference.pkl"

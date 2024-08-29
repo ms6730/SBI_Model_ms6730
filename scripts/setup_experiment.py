@@ -23,6 +23,7 @@ import torch
 from torch.distributions import Uniform
 import pickle
 import json
+import random
 
 #read in variables from the json file
 json_path = sys.argv[1]
@@ -43,6 +44,12 @@ grid = settings['grid']
 temporal_resolution = settings['temporal_resolution']
 variable_list = settings['variable_list']
 init_press_path= settings['init_press_path']
+seed=settings['random_seed']
+
+#set the random seed
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 if os.path.isfile(init_press_path):
     setup_baseline_run(base_dir = base_dir, runname = runname, hucs = [huc], start=start, end = end, P=P, Q=Q, hours = num_hours, init_press_file_path=init_press_path)
