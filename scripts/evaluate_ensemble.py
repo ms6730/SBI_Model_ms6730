@@ -48,16 +48,12 @@ for sim in range(0,num_sims):
 # try loading existing inference structure
 # if not there, create new one from prior
 try:
-    fp = open(f"{base_dir}/{runname}_proposal.pkl", "rb")
+    with open(f"{base_dir}/{runname}_inference.pkl", "rb") as fp:
+        inference=pickle.load(fp)
 except FileNotFoundError:
     with open(f"{base_dir}/{runname}_prior.pkl", "rb") as fp:
         prior = pickle.load(fp)
     inference = SNPE(prior=prior)
-else:
-    with fp:
-        prior = pickle.load(fp)
-    fi = open(f"{base_dir}/{runname}_inference.pkl", "rb")
-    inference=pickle.load(fi)
 
 # get parameters for last ensemble run
 theta_sim = pd.read_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv")
@@ -89,9 +85,14 @@ x_sim = torch.stack(sim_data, dim=0)
 # update posterior with new simulations
 _ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(x_obs)
+accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
+proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
+
+theta = proposal.sample((num_sims,))
+theta = theta.numpy()
+theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
 
 # update inference and posterior
-
 filename = f"{base_dir}/{runname}_inference.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)

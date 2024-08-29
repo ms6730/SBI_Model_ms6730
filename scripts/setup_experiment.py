@@ -183,7 +183,7 @@ filtered_df = pd.DataFrame(filtered_dict)
 filtered_df.to_csv(f"{base_dir}/{runname}_filtered_orig_vals.csv", index=False)
 
 #create prior for subset mannings map
-orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy())
+orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy(), dtype=torch.float)
 mins = orig_mannings/scalar
 maxs = orig_mannings*scalar
 prior = Uniform(mins, maxs)

@@ -1,5 +1,5 @@
 import pickle
-import cloudpickle
+import os
 import shutil
 import parflow
 from parflow import Run
@@ -35,15 +35,23 @@ filtered_df=pd.read_csv(orig_vals_path)
 if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):
     fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
     posterior = pickle.load(fp)
+    fp.close()
+    print(posterior.dtype())
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
     prior = pickle.load(fp)
+    fp.close()
+    print(prior.dtype())
+    
     accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
     proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-    theta = proposal.sample((num_sims,)).numpy()
+    
+    theta = proposal.sample((num_sims,))
+    theta = theta.numpy()
+    
 else:
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
     prior = pickle.load(fp)  
-    theta = prior.sample((num_sims,)).numpy()
+    theta = prior.sample((num_sims,))
     
 theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
