@@ -90,13 +90,6 @@ x_sim = torch.stack(sim_data, dim=0)
 # update posterior with new simulations
 _ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(x_obs)
-accept_reject_fn = get_density_thresholder(posterior, quantile, num_samples_to_estimate_support=num_samples)
-proposal = RestrictedPrior(prior, accept_reject_fn, sample_with="rejection")
-
-theta_torch = proposal.sample((num_sims,))
-theta = theta_torch.numpy()
-theta.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
-
 
 # update inference and posterior
 filename = f"{base_dir}/{runname}_inference.pkl"
@@ -108,9 +101,11 @@ with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)
 print("pickled posterior")
 
-
-
-
+#updating the ensemble number in the json file 
+next_ens = ens_num+1
+settings['ens_num']=next_ens
+with open(json_path, 'w') as file:
+    json.dump(settings, file, indent=4) 
 
 
 
