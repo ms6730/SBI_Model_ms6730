@@ -64,19 +64,6 @@ else:
 theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
 
-#make plots from sampling the proposal 
-samples = proposal.sample((1000,))
-num_params = samples.shape[1]
-for i in range(num_params):
-    plt.figure(figsize=(8, 6))
-    plt.hist(samples[:, i].numpy(), bins=30, density=True, alpha=0.6, color='b')
-    plt.axvline(x=filtered_df.iloc[0, i], color='r', linestyle='--', label='True Value')
-    plt.title(f'Density Plot for Parameter {i}')
-    plt.xlabel(f'Parameter {i}')
-    plt.ylabel('Density')
-    plt.savefig(f'{base_dir}/plots/param{i}_dist.png', dpi=300, bbox_inches='tight', format='png')
-    plt.close()
-
 subset_mannings = read_pfb(f"{base_dir}/outputs/{runname}/{mannings_file}.pfb")
 
 for row in range(len(theta_df)):

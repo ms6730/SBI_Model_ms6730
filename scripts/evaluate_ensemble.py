@@ -28,6 +28,8 @@ quantile = settings['quantile']
 obsv_path=settings['observation_path']
 seed=settings['random_seed']
 metadata_path=f'{base_dir}/outputs/{runname}/streamflow_daily_metadf.csv'
+orig_vals_path = f"{base_dir}/{runname}_filtered_orig_vals.csv"
+filtered_df=pd.read_csv(orig_vals_path)
 
 #set the random seed
 random.seed(seed)
@@ -91,6 +93,19 @@ x_sim = torch.stack(sim_data, dim=0)
 _ = inference.append_simulations(theta_sim, x_sim).train(force_first_round_loss=True)
 posterior = inference.build_posterior().set_default_x(x_obs)
 
+#make plots from sampling the proposal 
+samples = posterior.sample((1000,))
+num_params = samples.shape[1]
+for i in range(num_params):
+    plt.figure(figsize=(8, 6))
+    plt.hist(samples[:, i].numpy(), bins=30, density=True, alpha=0.6, color='b')
+    plt.axvline(x=filtered_df.iloc[0, i], color='r', linestyle='--', label='True Value')
+    plt.title(f'Density Plot for Parameter {i}')
+    plt.xlabel(f'Parameter {i}')
+    plt.ylabel('Density')
+    plt.savefig(f'{base_dir}/plots/param{i}_posterior_density_ens{ens_num}.png', dpi=300, bbox_inches='tight', format='png')
+    plt.close()
+    
 # update inference and posterior
 filename = f"{base_dir}/{runname}_inference.pkl"
 with open(filename, "wb") as fp:
