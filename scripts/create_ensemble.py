@@ -6,10 +6,13 @@ from parflow import Run
 from parflow.tools.io import read_pfb, write_pfb
 from parflow.tools.fs import mkdir
 import subsettools as st
+import numpy as np
 import pandas as pd
 import json 
 from sbi.utils import get_density_thresholder, RestrictedPrior
 import random
+import matplotlib.pyplot as plt
+import torch
 
 #read in variables from the json file
 json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
@@ -36,13 +39,13 @@ filtered_df=pd.read_csv(orig_vals_path)
 #set the random seed
 random.seed(seed)
 np.random.seed(seed)
+torch.manual_seed(seed)
 
 # read the prior/posterior to sample
 if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):
     fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
     posterior = pickle.load(fp)
     fp.close()
-    print(posterior.dtype())
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
     prior = pickle.load(fp)
     fp.close()
@@ -60,6 +63,19 @@ else:
     
 theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
+
+#make plots from sampling the proposal 
+samples = proposal.sample((1000,))
+num_params = samples.shape[1]
+for i in range(num_params):
+    plt.figure(figsize=(8, 6))
+    plt.hist(samples[:, i].numpy(), bins=30, density=True, alpha=0.6, color='b')
+    plt.axvline(x=filtered_df.iloc[0, i], color='r', linestyle='--', label='True Value')
+    plt.title(f'Density Plot for Parameter {i}')
+    plt.xlabel(f'Parameter {i}')
+    plt.ylabel('Density')
+    plt.savefig(f'{base_dir}/plots/param{i}_dist.png', dpi=300, bbox_inches='tight', format='png')
+    plt.close()
 
 subset_mannings = read_pfb(f"{base_dir}/outputs/{runname}/{mannings_file}.pfb")
 
