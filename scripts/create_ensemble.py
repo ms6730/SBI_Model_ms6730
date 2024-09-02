@@ -11,7 +11,6 @@ import pandas as pd
 import json 
 from sbi.utils import get_density_thresholder, RestrictedPrior
 import random
-import matplotlib.pyplot as plt
 import torch
 
 #read in variables from the json file

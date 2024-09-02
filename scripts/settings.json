@@ -21,5 +21,5 @@
     "temporal_resolution": "daily",
     "observation_path": "/home/at8471/c2_sbi_experiments/sbi_framework/outputs/sinnemahoning/streamflow_daily_pfsim.csv",
     "random_seed": 0,
-    "ens_num": 1
+    "ens_num": 2
 }
