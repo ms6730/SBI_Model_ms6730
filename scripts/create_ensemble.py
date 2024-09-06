@@ -59,8 +59,10 @@ else:
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
     prior = pickle.load(fp)  
     theta = prior.sample((num_sims,))
-    
-theta_df = pd.DataFrame(theta, columns=filtered_df.columns)
+
+sample_column_names = list(filtered_df.columns) + ['noise_param']
+
+theta_df = pd.DataFrame(theta, columns=sample_column_names)
 theta_df.to_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv", index=False)
 
 subset_mannings = read_pfb(f"{base_dir}/outputs/{runname}/{mannings_file}.pfb")
@@ -70,7 +72,7 @@ for row in range(len(theta_df)):
     mkdir(run_dir)
     new_mannings = subset_mannings.copy()
     
-    for col in filtered_df.columns:
+    for col in filtered_df.columns: #continuing to use filtered_df.columns because we don't want to use the noise_param in theta_df
         orig_val = filtered_df[col][0]
         new_val = theta_df.iloc[row][col]
 

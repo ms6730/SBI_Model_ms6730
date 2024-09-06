@@ -64,6 +64,8 @@ except FileNotFoundError:
 
 # get parameters for last ensemble run
 theta_sim = pd.read_csv(f"{base_dir}/{runname}_parameters_ens{ens_num}.csv")
+noise_param_col = theta_sim['noise_param']
+noise_param = torch.tensor(noise_param_col.values, dtype=torch.float)
 theta_sim = torch.tensor(theta_sim.values, dtype=torch.float)
 
 # create 1D torch tensors for observed and simulated outputs
@@ -85,6 +87,7 @@ for i in range(0,num_sims):
     sim_df = sim_df[common_columns]
     sim_tensor = torch.tensor(sim_df.values, dtype=torch.float)
     sim_flat = torch.flatten(sim_tensor)
+    sim_flat += torch.randn(sim_flat.shape) * (sim_flat * noise_param)
     sim_data.append(sim_flat)
 
 x_sim = torch.stack(sim_data, dim=0)

@@ -193,7 +193,15 @@ filtered_df.to_csv(f"{base_dir}/{runname}_filtered_orig_vals.csv", index=False)
 orig_mannings = torch.tensor(filtered_df.iloc[0].to_numpy(), dtype=torch.float)
 mins = orig_mannings/scalar
 maxs = orig_mannings*scalar
-prior = Uniform(mins, maxs)
+
+#append a noise variable to add to the prior
+noise_min = torch.tensor([0])
+min_tensor = torch.cat((mins, noise_min))
+noise_max = torch.tensor([0.2])
+max_tensor = torch.cat((maxs, noise_max))
+
+#create the uniform prior
+prior = Uniform(min_tensor, max_tensor)
 
 #save the prior
 with open(f'{base_dir}/{runname}_prior.pkl', 'wb') as f:
