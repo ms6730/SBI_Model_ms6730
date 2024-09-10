@@ -110,11 +110,11 @@ for i in range(num_params):
     plt.close()
     
 # update inference and posterior
-filename = f"{base_dir}/{runname}_inference.pkl"
+filename = f"{base_dir}/{runname}_inference_{ens_num}.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(inference, fp)
 print("pickled inference")
-filename = f"{base_dir}/{runname}_posterior.pkl"
+filename = f"{base_dir}/{runname}_posterior_{ens_num}.pkl"
 with open(filename, "wb") as fp:
     pickle.dump(posterior, fp)
 print("pickled posterior")

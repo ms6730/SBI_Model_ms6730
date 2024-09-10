@@ -41,8 +41,8 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 # read the prior/posterior to sample
-if os.path.isfile(f"{base_dir}/{runname}_posterior.pkl"):
-    fp = open(f"{base_dir}/{runname}_posterior.pkl", "rb")
+if os.path.isfile(f"{base_dir}/{runname}_posterior_{ens_num-1}.pkl"):
+    fp = open(f"{base_dir}/{runname}_posterior_{ens_num-1}.pkl", "rb")
     posterior = pickle.load(fp)
     fp.close()
     fp=open(f"{base_dir}/{runname}_prior.pkl", "rb")
@@ -92,15 +92,3 @@ for row in range(len(theta_df)):
     )
     
     st.dist_run(P, Q, runscript_path, working_dir=run_dir, dist_clim_forcing=False)
-
-# save current inference, proposal and posterior
-try:
-    src_file = f"{base_dir}/{runname}_posterior.pkl"
-    dest_file=f"{base_dir}/{runname}_posterior{ens_num-1}.pkl"
-    shutil.copyfile(src_file, dest_file)
-    
-    src_file = f"{base_dir}/{runname}_inference.pkl"
-    dest_file=f"{base_dir}/{runname}_inference{ens_num-1}.pkl"
-    shutil.copyfile(src_file, dest_file)
-except:
-    pass
