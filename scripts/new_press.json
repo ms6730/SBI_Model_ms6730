@@ -11,6 +11,8 @@
 	"Q": 4,
 	"init_press_path": "/home/at8471/c2_sbi_experiments/sbi_framework/outputs/sbp_spinup_press/2003-10-27_press.pfb",
 	"num_sims": 1,
+	"noise_min": 0,
+	"noise_max": 0.2, 
 	"init_prior_scalar": 2,
 	"base_mannings_file": "mannings",
 	"variable_list": ["streamflow"],

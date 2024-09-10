@@ -40,6 +40,8 @@ timezone = settings['timezone']
 P = settings['P']
 Q = settings['Q']
 scalar = settings['init_prior_scalar']
+noise_min = settings['noise_min']
+noise_max = settings['noise_max']
 grid = settings['grid']
 temporal_resolution = settings['temporal_resolution']
 variable_list = settings['variable_list']
@@ -195,10 +197,10 @@ mins = orig_mannings/scalar
 maxs = orig_mannings*scalar
 
 #append a noise variable to add to the prior
-noise_min = torch.tensor([0])
-min_tensor = torch.cat((mins, noise_min))
-noise_max = torch.tensor([0.2])
-max_tensor = torch.cat((maxs, noise_max))
+noise_min_val = torch.tensor([noise_min])
+min_tensor = torch.cat((mins, noise_min_val))
+noise_max_val = torch.tensor([noise_max])
+max_tensor = torch.cat((maxs, noise_max_val))
 
 #create the uniform prior
 prior = Uniform(min_tensor, max_tensor)
