@@ -74,10 +74,7 @@ def setup_baseline_run(base_dir, runname, hucs, start, end, P, Q, hours, grid="c
     run = Run.from_definition(runscript_path)
     run.TimingInfo.StopTime = hours 
     run.Solver.CLM.MetFileName = forcing_ds
-    #turn on for running on a gpu parflow build
-    #run.Solver.Linear.Preconditioner = 'MGSemi'
-    #run.Solver.Nonlinear.UseJacobian = True
-    #run.Solver.Linear.Preconditioner.PCMatrixType = 'PFSymmetric'
+    
     run.write(working_directory=pf_out_dir,file_format='yaml')
 
 def get_parflow_output_nc(

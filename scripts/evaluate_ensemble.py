@@ -10,6 +10,7 @@ import torch
 import json
 import random
 import matplotlib.pyplot as plt
+
 #read in variables from the json file
 json_path = '/home/at8471/c2_sbi_experiments/hydrogen-sbi/scripts/settings.json' #probably need a better way to do this step
 with open(json_path, 'r') as file:

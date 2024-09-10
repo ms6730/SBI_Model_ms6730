@@ -1,8 +1,6 @@
 import sys
 import os
 os.environ['PARFLOW_DIR'] = '/home/SHARED/software/parflow/3.10.0'
-#path to gpu build on della 
-#os.environ['PARFLOW_DIR'] = '/home/ga6/parflow_mgsemi_new/parflow'
 from parflow import Run
 from parflow.tools.settings import set_working_directory
 from pathlib import Path
